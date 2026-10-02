@@ -1,0 +1,234 @@
+# SCRUBIT — Teammate 1 Handoff: Local AI / Risk Engine
+
+## READ THIS FIRST
+We have approximately **3 hours total** for this hackathon build. Do not over-engineer. Your job is to make one reliable local AI classification pipeline that the rest of the team can call.
+
+## What SCRUBIT Is
+SCRUBIT is a privacy-first social-media reputation auditing tool. A user provides their own social-media export/archive. We extract their posts and use a **locally running open-weight AI model** to identify content they may want to review before presenting their public profile professionally.
+
+The AI does NOT decide whether someone is employable and should not claim that a post will get someone fired or rejected. It identifies possible professional/reputation risks and explains them.
+
+## Why Local AI Matters
+The user's social-media history can contain sensitive personal information. Our central technical/privacy idea is:
+
+**Social archive -> local parser -> local open-weight AI -> results dashboard**
+
+We do not want to send the user's social history to a third-party cloud LLM if we can avoid it.
+
+## Your Exact Responsibility
+Build the AI analysis component.
+
+You receive ONE normalized post at a time, such as:
+
+```json
+{
+  "id": "post_002",
+  "platform": "instagram",
+  "date": "2025-08-12",
+  "text": "Called out sick today but actually went to Vegas lol"
+}
+```
+
+You return structured JSON such as:
+
+```json
+{
+  "id": "post_002",
+  "risk": "HIGH",
+  "category": "Professional Conduct",
+  "explanation": "The post publicly suggests dishonesty about missing work, which could be viewed negatively in a professional context.",
+  "recommendation": "Review this post and consider changing its visibility or removing it if it no longer represents you."
+}
+```
+
+### Allowed risk values
+- `HIGH`
+- `MEDIUM`
+- `LOW`
+
+### Initial categories
+Keep these simple. Do not create a complicated taxonomy today.
+- Professional Conduct
+- Harassment / Hostility
+- Discriminatory Content
+- Illegal Activity
+- Drugs / Alcohol
+- Sexual / Explicit Content
+- Violence / Threats
+- Personal Information / Privacy
+- Confidential Information
+- Offensive Language
+- Other
+- No Significant Risk
+
+## Important AI Behavior
+The model MUST consider context instead of simply matching keywords.
+
+Example:
+
+`I'm going to kill this presentation tomorrow.`
+
+should NOT automatically become HIGH risk for violence. It is a common figurative expression.
+
+Likewise, do not automatically treat any mention of alcohol, politics, profanity, etc. as HIGH risk. The goal is to identify content a user may reasonably want to REVIEW, not moralize or make employment decisions.
+
+## Recommended Implementation
+Use a locally running open-weight model. **Ollama is a practical option if it is already available or can be installed quickly.** Choose a model small enough to run acceptably on the team's available computer.
+
+Do NOT spend 45 minutes comparing models. Get one model producing structured output first.
+
+Possible conceptual flow:
+
+```text
+analyze_post(post)
+    -> construct system/user prompt
+    -> call local model
+    -> request JSON only
+    -> parse JSON
+    -> validate required fields
+    -> return result
+```
+
+Put your work behind one clean function if possible:
+
+```python
+def analyze_post(post: dict) -> dict:
+    ...
+```
+
+This makes integration much easier.
+
+## Prompt Requirements
+Tell the model approximately this:
+
+```text
+You are the analysis engine for SCRUBIT, a personal social-media reputation auditing tool.
+
+Analyze the user's own social-media post for content they may want to review before presenting their public profile professionally.
+
+Consider context. Do not classify based only on keywords. Do not determine employability. Do not infer protected or highly sensitive personal traits. Do not make definitive claims about how an employer will react.
+
+Choose exactly one risk level: HIGH, MEDIUM, or LOW.
+Choose the most relevant category.
+Give a concise explanation and a neutral recommendation.
+
+Return valid JSON only.
+```
+
+Then include the post text and expected schema.
+
+## Error Handling
+AI output can be annoying. We need demo reliability.
+
+At minimum:
+1. Attempt to parse returned JSON.
+2. If parsing fails, retry once with an explicit `RETURN VALID JSON ONLY` instruction.
+3. If it still fails, return a safe fallback rather than crashing the entire application.
+
+Example fallback:
+
+```json
+{
+  "risk": "LOW",
+  "category": "Other",
+  "explanation": "SCRUBIT could not confidently classify this post.",
+  "recommendation": "Review manually."
+}
+```
+
+## Test Posts
+Test these immediately:
+
+### Low
+`Just finished my first hackathon! Learned a ton about React.`
+
+Expected: LOW.
+
+### Medium/High professional conduct
+`Called out sick today but actually went to Vegas lol.`
+
+Expected: likely MEDIUM/HIGH, Professional Conduct.
+
+### Context test
+`I'm going to kill this presentation tomorrow.`
+
+Expected: LOW. Do NOT classify as a literal violent threat.
+
+### Privacy
+`Finally moved into my new apartment! Here's my new address: 123 Example Street.`
+
+Expected: HIGH/MEDIUM, Personal Information / Privacy.
+
+### Confidentiality
+`Can't believe our company is announcing Project Phoenix next week. Nobody knows yet.`
+
+Expected: HIGH, Confidential Information.
+
+## Integration Contract
+The Data/Backend teammate will normalize posts. Assume input looks like:
+
+```json
+{
+  "id": "string",
+  "platform": "string",
+  "date": "string or null",
+  "text": "string"
+}
+```
+
+Return:
+
+```json
+{
+  "id": "same ID",
+  "risk": "HIGH | MEDIUM | LOW",
+  "category": "string",
+  "explanation": "string",
+  "recommendation": "string"
+}
+```
+
+Do not randomly rename these fields without telling the team. These field names are our API contract.
+
+## Definition of Done
+Your component is DONE when:
+- local open-weight model runs;
+- one Python function can accept post text/data;
+- it reliably returns valid structured classification JSON;
+- the figurative `kill this presentation` test is not treated as a literal threat;
+- another teammate can call your function without understanding your model implementation.
+
+## DO NOT BUILD YET
+Unless the MVP is completely working, do NOT spend time on:
+- image analysis;
+- multiple models;
+- fine-tuning;
+- embeddings/vector databases;
+- sophisticated confidence calibration;
+- model benchmarking;
+- authentication;
+- deployment/cloud AI.
+
+We have 3 hours. Reliability beats sophistication.
+
+## If You Finish Early
+Best improvements, in order:
+1. Improve contextual classification / reduce false positives.
+2. Add a numeric confidence only if it is genuinely useful and stable.
+3. Batch several posts efficiently.
+4. Add a second-pass explanation for flagged posts.
+
+## Prompt to Give Your AI Assistant
+Copy this entire file into your AI assistant and say:
+
+> I am Teammate 1 on this three-person hackathon project. I own the Local AI / Risk Engine described in this document. We only have about 3 hours total. Help me implement the smallest reliable version immediately. Work step-by-step, give me exact commands and code, preserve the input/output JSON contract in this document, and do not add unnecessary technologies or features. Prioritize getting one test post classified by a local open-weight model first, then make the component callable by our backend.
+
+## Communicate These Things to the Team
+As soon as you know them, tell us:
+- What local model/runner you chose.
+- How we call `analyze_post()`.
+- Any dependency/install command we need.
+- Whether classifications take 1 second, 10 seconds, etc.
+- Any change you absolutely need to the JSON contract.
+
+**Primary objective: one post in -> valid risk JSON out.**
