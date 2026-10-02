@@ -7,6 +7,31 @@ from fastapi.middleware.cors import CORSMiddleware
 from ai_adapter import AI_MODE, analyze
 from parser import ArchiveError, parse_archive
 
+from fastapi import FastAPI, UploadFile, File
+# 1. Import the CORS middleware module
+from fastapi.middleware.cors import CORSMiddleware
+from ai_adapter import analyze
+import json
+
+app = FastAPI()
+
+# 2. Allow your local frontend port to communicate securely
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows POST, GET, etc.
+    allow_headers=["*"],
+)
+
+# ... leave the rest of your teammate's routes and endpoints below exactly as they are
+
+
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 RISK_ORDER = {"HIGH": 0, "MEDIUM": 1, "LOW": 2, "UNKNOWN": 3}
 

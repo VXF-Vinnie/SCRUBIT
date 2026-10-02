@@ -2,7 +2,7 @@ import json
 import os
 import ollama
 
-# Optimize performance for Intel CPU
+# Optimize text generation performance for Intel CPUs
 os.environ["OLLAMA_FLASH_ATTENTION"] = "1"
 
 ANALYSIS_SCHEMA = {
@@ -36,8 +36,7 @@ CRITICAL RULES:
 
 def analyze_post(post: dict) -> dict:
     """
-    Exposes the clean endpoint for Teammate 2's backend file.
-    Takes a normalized dictionary and returns the structured AI metrics.
+    Core entrypoint for the FastAPI backend layer.
     """
     try:
         response = ollama.chat(
@@ -50,7 +49,7 @@ def analyze_post(post: dict) -> dict:
         )
         result = json.loads(response['message']['content'])
         
-        # Format normalization to ensure compatibility with teammate's framework
+        # Format normalization to ensure exact map parity with backend contracts
         return {
             "risk": str(result.get("risk", "LOW")).strip().upper(),
             "category": result.get("category", "Uncategorized"),
@@ -61,6 +60,6 @@ def analyze_post(post: dict) -> dict:
         return {
             "risk": "LOW",
             "category": "Analysis Error",
-            "explanation": f"Local AI model failed to evaluate context: {e}",
+            "explanation": f"Local AI processing error: {e}",
             "recommendation": "Review post manually."
         }
