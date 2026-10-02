@@ -16,7 +16,16 @@ link here: https://ollama.com/
    ```bash
    pip install -r requirements.txt
    ```
-4. Run the analysis pipeline:
-   ```bash
-   python3 app.py
-   ```
+4. Start up the back-end server:
+   '''bash
+   uvicorn main:app --reload --port 8000
+   '''
+5. Start up the front-end server:
+   '''bash
+   python3 -m http.server 5500
+   '''
+6. open the local website on a browser, chrome works best for me
+   ''' 
+   http://0.0.0.0:5000/
+   '''
+7. Upload your social media archive .zip file and see posts get curated! 
