@@ -2,16 +2,6 @@
     ==========================================
     SCRUBIT UNIFIED FRONTEND LOGIC 🛡️
     ==========================================
-<<<<<<< HEAD
-=======
-
-    Connects the SCRUBIT frontend to the
-    FastAPI backend running locally.
-
-    The selected social media archive is sent
-    to the backend, where posts are extracted
-    and analyzed by the local AI model.
->>>>>>> e28e4125931d696ff813efbfa752ce624b7432c9
 */
 
 async function handleRealScan(fileFileObject) {
@@ -23,51 +13,6 @@ async function handleRealScan(fileFileObject) {
     // Your teammate's backend route name signature expects the exact key name "file"
     formData.append("file", fileFileObject); 
 
-<<<<<<< HEAD
-    // Update UI progress indicators before making the live fetch network call
-    progressText.textContent = "Running live local AI analysis via Ollama (this will take a moment)...";
-    progressBar.style.width = "75%";
-
-    try {
-        // 🚀 FIX: Connect explicitly to the fully qualified FastAPI port endpoint
-        const response = await fetch("http://127.0.0", {
-            method: "POST",
-            body: formData,
-            headers: {
-                "Accept": "application/json"
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Server returned error code: ${response.status}`);
-        }
-
-        // Catch the real data package successfully returned by your local AI engine
-        const serverPayload = await response.json();
-        
-        progressBar.style.width = "100%";
-        progressText.textContent = "Pipeline complete!";
-
-        // Wait half a second so the user sees 100% completion before switching screens
-        setTimeout(() => {
-            // Pass the .results array block directly to the data renderer
-            showResults(serverPayload.results);
-        }, 500);
-
-    } catch (error) {
-        console.error("Failed to connect to local SCRUBIT backend:", error);
-        alert("Could not communicate with the local AI model. Ensure your FastAPI terminal is running on port 8000.");
-        
-        // Fail-safe: Reset the view back to the upload screen if network drops
-        resultsScreen.classList.add("hidden");
-        scanningScreen.classList.add("hidden");
-        uploadScreen.classList.remove("hidden");
-    }
-}
-
-
-=======
->>>>>>> e28e4125931d696ff813efbfa752ce624b7432c9
 // ==========================================
 // GET ELEMENTS FROM HTML
 // ==========================================
@@ -114,20 +59,12 @@ chooseFileButton.addEventListener("click", () => {
     fileInput.click();
 });
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e28e4125931d696ff813efbfa752ce624b7432c9
 fileInput.addEventListener("change", () => {
     const file = fileInput.files[0]; // Fetch the singular active file object
     if (file) {
-<<<<<<< HEAD
-        fileName.textContent = file.name;
-=======
 
         fileName.textContent = file.name;
 
->>>>>>> e28e4125931d696ff813efbfa752ce624b7432c9
         scanButton.disabled = false;
     }
 });
@@ -137,11 +74,6 @@ fileInput.addEventListener("change", () => {
 // START REAL SCAN
 // ==========================================
 
-<<<<<<< HEAD
-scanButton.addEventListener("click", () => {
-    const file = fileInput.files[0]; // Fetch the targeted file item target
-    if (!file) return;
-=======
 scanButton.addEventListener("click", async () => {
 
     const file = fileInput.files[0];
@@ -151,25 +83,11 @@ scanButton.addEventListener("click", async () => {
         return;
     }
 
->>>>>>> e28e4125931d696ff813efbfa752ce624b7432c9
 
     // Hide upload screen and swap out the screening viewports
     uploadScreen.classList.add("hidden");
     scanningScreen.classList.remove("hidden");
 
-<<<<<<< HEAD
-    // Initialize progress indicators
-    progressBar.style.width = "10%";
-    progressText.textContent = "Reading archive and extracting posts...";
-
-    // Trigger the real live execution pipeline
-    setTimeout(() => {
-        handleRealScan(file);
-    }, 600);
-});
-
-
-=======
     // Reset progress.
     progressBar.style.width = "10%";
     progressText.textContent = "Reading archive...";
@@ -283,7 +201,6 @@ scanButton.addEventListener("click", async () => {
 });
 
 
->>>>>>> e28e4125931d696ff813efbfa752ce624b7432c9
 // ==========================================
 // SHOW RESULTS
 // ==========================================
@@ -313,23 +230,15 @@ function showResults(results) {
 function renderPosts(results) {
     postsContainer.innerHTML = "";
 
-<<<<<<< HEAD
-=======
 
     // High-risk posts appear first.
 
->>>>>>> e28e4125931d696ff813efbfa752ce624b7432c9
     const riskOrder = {
         HIGH: 1,
         MEDIUM: 2,
         LOW: 3
     };
 
-<<<<<<< HEAD
-    const sortedResults = [...results].sort(
-        (a, b) => riskOrder[a.risk] - riskOrder[b.risk]
-    );
-=======
 
     const sortedResults =
         [...results].sort(
@@ -338,20 +247,15 @@ function renderPosts(results) {
                 (riskOrder[b.risk] || 99)
         );
 
->>>>>>> e28e4125931d696ff813efbfa752ce624b7432c9
 
     sortedResults.forEach(post => {
         const card = document.createElement("article");
         card.className = "post-card";
-<<<<<<< HEAD
-        const riskClass = post.risk ? post.risk.toLowerCase() : "low";
-=======
 
 
         const riskClass =
             (post.risk || "LOW").toLowerCase();
 
->>>>>>> e28e4125931d696ff813efbfa752ce624b7432c9
 
         card.innerHTML = `
             <div class="post-top">
