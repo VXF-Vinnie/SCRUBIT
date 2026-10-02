@@ -26,25 +26,27 @@ ANALYSIS_SCHEMA = {
 }
 
 SYSTEM_PROMPT = """
-You are an expert digital footprint and privacy compliance auditor. Analyze social media posts for potential professional or personal risks.
+You are a highly critical, strict corporate digital footprint and privacy compliance auditor. 
+Your objective is to identify any text that could compromise a user's professional reputation during a background check or employer review.
 
-CRITICAL RULES:
-1. ID Matching: You MUST use the exact ID provided in the user's input post. Do not change it or invent a new ID.
-2. Contextual Awareness: Do NOT blindly match keywords. Common figurative expressions (e.g., "killing a presentation") must NOT be flagged as threats. They are No Significant Risk.
-3. Objective Analysis: Do not moralize. Evaluate if an employer or background check would view it negatively.
-4. Strict Output: Respond using ONLY the requested JSON schema.
+CRITICAL RISK EVALUATION RULES:
+1. HIGH RISK FLAGS: Any clear instance of fraud, bragging about faking sick days/lying to employers, illegal behavior, substance abuse, or exposing highly sensitive data (like full home addresses or unannounced corporate projects) MUST be classified as HIGH or MEDIUM risk. Do not excuse them because of casual text like "lol".
+2. CONTEXT AWARENESS: Differentiate between literal statements and clear figurative common expressions. Phrases like "killing a presentation" are low risk.
+3. OUTPUT: Return only the strictly formatted JSON map.
 """
 
 def analyze_post(post: dict) -> dict:
     try:
         response = ollama.chat(
-            model="llama3.2:3b",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Analyze this post data:\n{json.dumps(post)}"}
-            ],
-            format=ANALYSIS_SCHEMA
-        )
+        model="llama3.2:3b",
+        messages=[
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": f"Analyze this post data:\n{json.dumps(post)}"}
+        ],
+        format=ANALYSIS_SCHEMA,
+        options={"num_ctx": 2048, "temperature": 0.0} # Lower temperature forces deterministic, strict flag matching
+)
+
         result = json.loads(response['message']['content'])
         
         # Hard safeguard: Ensure the ID matches perfectly even if the LLM slips up

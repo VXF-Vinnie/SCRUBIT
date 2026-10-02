@@ -1,70 +1,58 @@
 /*
     ==========================================
-    SCRUBIT FRONTEND LOGIC
+    SCRUBIT UNIFIED FRONTEND LOGIC 🛡️
     ==========================================
-
-    IMPORTANT:
-
-    We currently use fake scan results.
-
-    This lets the frontend work independently
-    while the backend + AI teammates finish
-    their components.
-
-    Later, fakeResults will be replaced with
-    data returned by the backend.
 */
 
+async function handleRealScan(fileFileObject) {
+    // Clear old dashboard cards before initiating a fresh scan run
+    postsContainer.innerHTML = "";
+    
+    // Bundle the selected physical file into multi-part form data mapping
+    const formData = new FormData();
+    // Your teammate's backend route name signature expects the exact key name "file"
+    formData.append("file", fileFileObject); 
 
-// ==========================================
-// TEMPORARY DEMO DATA
-// ==========================================
+    // Update UI progress indicators before making the live fetch network call
+    progressText.textContent = "Running live local AI analysis via Ollama (this will take a moment)...";
+    progressBar.style.width = "75%";
 
-const fakeResults = [
+    try {
+        // 🚀 FIX: Connect explicitly to the fully qualified FastAPI port endpoint
+        const response = await fetch("http://127.0.0", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "Accept": "application/json"
+            }
+        });
 
-    {
-        id: "post_001",
+        if (!response.ok) {
+            throw new Error(`Server returned error code: ${response.status}`);
+        }
 
-        text:
-            "Called out sick today but actually went to Vegas lol",
+        // Catch the real data package successfully returned by your local AI engine
+        const serverPayload = await response.json();
+        
+        progressBar.style.width = "100%";
+        progressText.textContent = "Pipeline complete!";
 
-        risk: "HIGH",
+        // Wait half a second so the user sees 100% completion before switching screens
+        setTimeout(() => {
+            // Pass the .results array block directly to the data renderer
+            showResults(serverPayload.results);
+        }, 500);
 
-        category: "Professional Conduct",
-
-        explanation:
-            "This post publicly suggests dishonesty about missing work and could be interpreted negatively by someone viewing it without context."
-    },
-
-    {
-        id: "post_002",
-
-        text:
-            "My manager is literally the worst person to work for.",
-
-        risk: "MEDIUM",
-
-        category: "Professional Conduct",
-
-        explanation:
-            "Public criticism of a workplace or manager could be interpreted as unprofessional depending on the context."
-    },
-
-    {
-        id: "post_003",
-
-        text:
-            "This presentation is going to be killer tomorrow!",
-
-        risk: "LOW",
-
-        category: "General",
-
-        explanation:
-            "The phrase is figurative and does not appear to represent a meaningful professional reputation risk."
+    } catch (error) {
+        console.error("Failed to connect to local SCRUBIT backend:", error);
+        alert("Could not communicate with the local AI model. Ensure your FastAPI terminal is running on port 8000.");
+        
+        // Fail-safe: Reset the view back to the upload screen if network drops
+        resultsScreen.classList.add("hidden");
+        scanningScreen.classList.add("hidden");
+        uploadScreen.classList.remove("hidden");
     }
-
-];
+}
 
 
 // ==========================================
@@ -109,32 +97,16 @@ const postsContainer =
 // FILE SELECTION
 // ==========================================
 
-// Clicking our pretty button opens the
-// browser's real file picker.
-
 chooseFileButton.addEventListener("click", () => {
-
     fileInput.click();
-
 });
 
-
-// When the user selects a file...
-
 fileInput.addEventListener("change", () => {
-
-    const file = fileInput.files[0];
-
+    const file = fileInput.files[0]; // Fetch the singular active file object
     if (file) {
-
-        // Show filename to user.
         fileName.textContent = file.name;
-
-        // Enable scan button.
         scanButton.disabled = false;
-
     }
-
 });
 
 
@@ -143,74 +115,22 @@ fileInput.addEventListener("change", () => {
 // ==========================================
 
 scanButton.addEventListener("click", () => {
+    const file = fileInput.files[0]; // Fetch the targeted file item target
+    if (!file) return;
 
-    // Hide upload screen.
+    // Hide upload screen and swap out the screening viewports
     uploadScreen.classList.add("hidden");
-
-    // Show scanning screen.
     scanningScreen.classList.remove("hidden");
 
-    runFakeScan();
+    // Initialize progress indicators
+    progressBar.style.width = "10%";
+    progressText.textContent = "Reading archive and extracting posts...";
 
+    // Trigger the real live execution pipeline
+    setTimeout(() => {
+        handleRealScan(file);
+    }, 600);
 });
-
-
-// ==========================================
-// TEMPORARY FAKE SCAN
-
-// This creates the illusion of scanning
-// while our teammates build the real backend.
-//
-// Later this function will call FastAPI.
-// ==========================================
-
-function runFakeScan() {
-
-    let progress = 0;
-
-    const messages = [
-        "Reading archive...",
-        "Extracting posts...",
-        "Running local AI analysis...",
-        "Checking professional reputation risks...",
-        "Preparing your results..."
-    ];
-
-
-    const interval = setInterval(() => {
-
-        progress += 20;
-
-        progressBar.style.width =
-            progress + "%";
-
-
-        const messageIndex =
-            Math.min(
-                Math.floor(progress / 20) - 1,
-                messages.length - 1
-            );
-
-
-        progressText.textContent =
-            messages[messageIndex];
-
-
-        if (progress >= 100) {
-
-            clearInterval(interval);
-
-            setTimeout(() => {
-
-                showResults(fakeResults);
-
-            }, 500);
-
-        }
-
-    }, 550);
-
-}
 
 
 // ==========================================
@@ -218,45 +138,20 @@ function runFakeScan() {
 // ==========================================
 
 function showResults(results) {
-
     scanningScreen.classList.add("hidden");
-
     resultsScreen.classList.remove("hidden");
 
+    // Dynamically calculate metrics based on the incoming array stream
+    const high = results.filter(post => post.risk === "HIGH").length;
+    const medium = results.filter(post => post.risk === "MEDIUM").length;
+    const low = results.filter(post => post.risk === "LOW").length;
 
-    // Count risk levels.
-
-    const high =
-        results.filter(
-            post => post.risk === "HIGH"
-        ).length;
-
-    const medium =
-        results.filter(
-            post => post.risk === "MEDIUM"
-        ).length;
-
-    const low =
-        results.filter(
-            post => post.risk === "LOW"
-        ).length;
-
-
-    document.getElementById("high-count")
-        .textContent = high;
-
-    document.getElementById("medium-count")
-        .textContent = medium;
-
-    document.getElementById("low-count")
-        .textContent = low;
-
-    document.getElementById("total-posts")
-        .textContent = results.length;
-
+    document.getElementById("high-count").textContent = high;
+    document.getElementById("medium-count").textContent = medium;
+    document.getElementById("low-count").textContent = low;
+    document.getElementById("total-posts").textContent = results.length;
 
     renderPosts(results);
-
 }
 
 
@@ -265,12 +160,7 @@ function showResults(results) {
 // ==========================================
 
 function renderPosts(results) {
-
-    // Clear old cards.
     postsContainer.innerHTML = "";
-
-
-    // High risk should appear first.
 
     const riskOrder = {
         HIGH: 1,
@@ -278,60 +168,38 @@ function renderPosts(results) {
         LOW: 3
     };
 
-
-    const sortedResults =
-        [...results].sort(
-            (a, b) =>
-                riskOrder[a.risk] -
-                riskOrder[b.risk]
-        );
-
+    const sortedResults = [...results].sort(
+        (a, b) => riskOrder[a.risk] - riskOrder[b.risk]
+    );
 
     sortedResults.forEach(post => {
-
-        const card =
-            document.createElement("article");
-
+        const card = document.createElement("article");
         card.className = "post-card";
-
-
-        const riskClass =
-            post.risk.toLowerCase();
-
+        const riskClass = post.risk ? post.risk.toLowerCase() : "low";
 
         card.innerHTML = `
-
             <div class="post-top">
-
                 <span class="risk-label ${riskClass}">
-                    ${post.risk} RISK
+                    ${post.risk || "LOW"} RISK
                 </span>
-
                 <span class="category">
-                    ${post.category}
+                    ${post.category || "General"}
                 </span>
-
             </div>
-
 
             <p class="post-text">
                 "${post.text}"
             </p>
 
-
             <p class="explanation">
                 <strong>Why was this flagged?</strong>
                 <br><br>
-                ${post.explanation}
+                ${post.explanation || "No risk elements detected in text footprint."}
             </p>
-
         `;
 
-
         postsContainer.appendChild(card);
-
     });
-
 }
 
 
@@ -340,18 +208,10 @@ function renderPosts(results) {
 // ==========================================
 
 scanAgainButton.addEventListener("click", () => {
-
     resultsScreen.classList.add("hidden");
-
     uploadScreen.classList.remove("hidden");
-
     fileInput.value = "";
-
-    fileName.textContent =
-        "No file selected";
-
+    fileName.textContent = "No file selected";
     scanButton.disabled = true;
-
     progressBar.style.width = "0%";
-
 });
