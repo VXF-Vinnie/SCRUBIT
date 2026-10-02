@@ -151,10 +151,11 @@ def _fix_meta_encoding(s: str) -> str:
 
 def _parse_x_js(data: bytes, source: str) -> list[dict]:
     """X/Twitter archive: data/tweets.js is JavaScript like
-    `window.YTD.tweets.part0 = [ {"tweet": {...}}, ... ]`. Strip the prefix, parse JSON."""
+    `window.YTD.tweets.part0 = [ {"tweet": {...}}, ... ];`. Strip the prefix,
+    parse the JSON list, and ignore anything after it (like a trailing ;)."""
     try:
         text = data.decode("utf-8-sig")
-        raw = json.loads(text[text.index("["):])
+        raw, _ = json.JSONDecoder().raw_decode(text[text.index("["):])
     except (UnicodeDecodeError, ValueError):
         raise ArchiveError(f"Could not read {source}: not a valid X/Twitter tweets file.")
     posts = []
