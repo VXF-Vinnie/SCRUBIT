@@ -3,68 +3,13 @@
     SCRUBIT FRONTEND LOGIC
     ==========================================
 
-    IMPORTANT:
+    Connects the SCRUBIT frontend to the
+    FastAPI backend running locally.
 
-    We currently use fake scan results.
-
-    This lets the frontend work independently
-    while the backend + AI teammates finish
-    their components.
-
-    Later, fakeResults will be replaced with
-    data returned by the backend.
+    The selected social media archive is sent
+    to the backend, where posts are extracted
+    and analyzed by the local AI model.
 */
-
-
-// ==========================================
-// TEMPORARY DEMO DATA
-// ==========================================
-
-const fakeResults = [
-
-    {
-        id: "post_001",
-
-        text:
-            "Called out sick today but actually went to Vegas lol",
-
-        risk: "HIGH",
-
-        category: "Professional Conduct",
-
-        explanation:
-            "This post publicly suggests dishonesty about missing work and could be interpreted negatively by someone viewing it without context."
-    },
-
-    {
-        id: "post_002",
-
-        text:
-            "My manager is literally the worst person to work for.",
-
-        risk: "MEDIUM",
-
-        category: "Professional Conduct",
-
-        explanation:
-            "Public criticism of a workplace or manager could be interpreted as unprofessional depending on the context."
-    },
-
-    {
-        id: "post_003",
-
-        text:
-            "This presentation is going to be killer tomorrow!",
-
-        risk: "LOW",
-
-        category: "General",
-
-        explanation:
-            "The phrase is figurative and does not appear to represent a meaningful professional reputation risk."
-    }
-
-];
 
 
 // ==========================================
@@ -109,9 +54,6 @@ const postsContainer =
 // FILE SELECTION
 // ==========================================
 
-// Clicking our pretty button opens the
-// browser's real file picker.
-
 chooseFileButton.addEventListener("click", () => {
 
     fileInput.click();
@@ -119,18 +61,14 @@ chooseFileButton.addEventListener("click", () => {
 });
 
 
-// When the user selects a file...
-
 fileInput.addEventListener("change", () => {
 
     const file = fileInput.files[0];
 
     if (file) {
 
-        // Show filename to user.
         fileName.textContent = file.name;
 
-        // Enable scan button.
         scanButton.disabled = false;
 
     }
@@ -139,10 +77,18 @@ fileInput.addEventListener("change", () => {
 
 
 // ==========================================
-// START SCAN
+// START REAL SCAN
 // ==========================================
 
-scanButton.addEventListener("click", () => {
+scanButton.addEventListener("click", async () => {
+
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Please select an archive first.");
+        return;
+    }
+
 
     // Hide upload screen.
     uploadScreen.classList.add("hidden");
@@ -150,67 +96,117 @@ scanButton.addEventListener("click", () => {
     // Show scanning screen.
     scanningScreen.classList.remove("hidden");
 
-    runFakeScan();
-
-});
-
-
-// ==========================================
-// TEMPORARY FAKE SCAN
-
-// This creates the illusion of scanning
-// while our teammates build the real backend.
-//
-// Later this function will call FastAPI.
-// ==========================================
-
-function runFakeScan() {
-
-    let progress = 0;
-
-    const messages = [
-        "Reading archive...",
-        "Extracting posts...",
-        "Running local AI analysis...",
-        "Checking professional reputation risks...",
-        "Preparing your results..."
-    ];
+    // Reset progress.
+    progressBar.style.width = "10%";
+    progressText.textContent = "Reading archive...";
 
 
-    const interval = setInterval(() => {
+    // Prepare file for FastAPI.
+    const formData = new FormData();
 
-        progress += 20;
-
-        progressBar.style.width =
-            progress + "%";
+    formData.append("file", file);
 
 
-        const messageIndex =
-            Math.min(
-                Math.floor(progress / 20) - 1,
-                messages.length - 1
-            );
+    try {
+
+        progressBar.style.width = "25%";
+        progressText.textContent = "Uploading archive...";
 
 
+        // Send the ZIP file to the SCRUBIT backend.
+        const response = await fetch(
+            "http://127.0.0.1:8000/scan",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+
+        progressBar.style.width = "60%";
         progressText.textContent =
-            messages[messageIndex];
+            "Running local AI analysis...";
 
 
-        if (progress >= 100) {
+        // Check for backend errors.
+        if (!response.ok) {
 
-            clearInterval(interval);
+            const errorText =
+                await response.text();
 
-            setTimeout(() => {
-
-                showResults(fakeResults);
-
-            }, 500);
+            throw new Error(
+                `Backend error ${response.status}: ${errorText}`
+            );
 
         }
 
-    }, 550);
 
-}
+        // Get results from FastAPI.
+        const data =
+            await response.json();
+
+
+        console.log(
+            "SCRUBIT backend response:",
+            data
+        );
+
+
+        // Make sure results were returned.
+        if (!data.results ||
+            !Array.isArray(data.results)) {
+
+            throw new Error(
+                "Backend did not return a valid results array."
+            );
+
+        }
+
+
+        progressBar.style.width = "90%";
+        progressText.textContent =
+            "Preparing your results...";
+
+
+        setTimeout(() => {
+
+            progressBar.style.width = "100%";
+
+            progressText.textContent =
+                "Analysis complete!";
+
+
+            setTimeout(() => {
+
+                showResults(data.results);
+
+            }, 300);
+
+        }, 300);
+
+
+    } catch (error) {
+
+        console.error(
+            "SCRUBIT scan failed:",
+            error
+        );
+
+
+        scanningScreen.classList.add("hidden");
+
+        uploadScreen.classList.remove("hidden");
+
+
+        alert(
+            "SCRUBIT scan failed.\n\n" +
+            "Make sure the backend and Ollama are running.\n\n" +
+            error.message
+        );
+
+    }
+
+});
 
 
 // ==========================================
@@ -270,7 +266,7 @@ function renderPosts(results) {
     postsContainer.innerHTML = "";
 
 
-    // High risk should appear first.
+    // High-risk posts appear first.
 
     const riskOrder = {
         HIGH: 1,
@@ -282,8 +278,8 @@ function renderPosts(results) {
     const sortedResults =
         [...results].sort(
             (a, b) =>
-                riskOrder[a.risk] -
-                riskOrder[b.risk]
+                (riskOrder[a.risk] || 99) -
+                (riskOrder[b.risk] || 99)
         );
 
 
@@ -296,7 +292,7 @@ function renderPosts(results) {
 
 
         const riskClass =
-            post.risk.toLowerCase();
+            (post.risk || "LOW").toLowerCase();
 
 
         card.innerHTML = `
@@ -308,7 +304,7 @@ function renderPosts(results) {
                 </span>
 
                 <span class="category">
-                    ${post.category}
+                    ${post.category || "General"}
                 </span>
 
             </div>
@@ -322,7 +318,7 @@ function renderPosts(results) {
             <p class="explanation">
                 <strong>Why was this flagged?</strong>
                 <br><br>
-                ${post.explanation}
+                ${post.explanation || "No explanation provided."}
             </p>
 
         `;
@@ -353,5 +349,10 @@ scanAgainButton.addEventListener("click", () => {
     scanButton.disabled = true;
 
     progressBar.style.width = "0%";
+
+    progressText.textContent =
+        "Reading archive...";
+
+    postsContainer.innerHTML = "";
 
 });
