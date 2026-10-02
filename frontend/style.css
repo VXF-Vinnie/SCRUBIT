@@ -340,6 +340,9 @@ nav {
     font-size: 13px;
 }
 
+
+/* HIGH PRIORITY */
+
 .risk-card.high {
     border-top: 3px solid #ff5c5c;
 }
@@ -348,19 +351,25 @@ nav {
     color: #ff7373;
 }
 
-.risk-card.medium {
+
+/* LOW PRIORITY */
+
+.risk-card.low {
     border-top: 3px solid #ffbd59;
 }
 
-.risk-card.medium p {
+.risk-card.low p {
     color: #ffc875;
 }
 
-.risk-card.low {
+
+/* CLEAR */
+
+.risk-card.clear {
     border-top: 3px solid #7cff9b;
 }
 
-.risk-card.low p {
+.risk-card.clear p {
     color: #7cff9b;
 }
 
@@ -404,20 +413,38 @@ nav {
     border-radius: 100px;
 }
 
+
+/* HIGH PRIORITY LABEL */
+
 .risk-label.high {
     background: #351919;
     color: #ff7979;
 }
 
-.risk-label.medium {
+
+/* LOW PRIORITY LABEL */
+
+.risk-label.low {
     background: #382b16;
     color: #ffc86b;
 }
 
-.risk-label.low {
+
+/* CLEAR LABEL */
+
+.risk-label.clear {
     background: #16301e;
     color: #82ffa0;
 }
+
+
+/* UNKNOWN / MANUAL REVIEW */
+
+.risk-label.unknown {
+    background: #252525;
+    color: #c7c7c7;
+}
+
 
 .post-text {
     font-size: 19px;
@@ -438,6 +465,25 @@ nav {
 .explanation {
     color: #9ca39e;
     line-height: 1.6;
+}
+
+
+/* =========================================
+   RECOMMENDATION
+   ========================================= */
+
+.recommendation {
+    color: #9ca39e;
+    line-height: 1.6;
+
+    margin-top: 18px;
+    padding-top: 18px;
+
+    border-top: 1px solid #292e2b;
+}
+
+.recommendation strong {
+    color: #f5f5f5;
 }
 
 
@@ -464,4 +510,5 @@ nav {
         gap: 20px;
         flex-direction: column;
     }
+
 }

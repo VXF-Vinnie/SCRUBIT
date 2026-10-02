@@ -1,40 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>SCRUBIT | Digital Footprint Scanner</title>
 
-    <!-- Our CSS -->
+    <!-- SCRUBIT CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
 
-    <!-- ================================
+    <!-- ==================================
          NAVIGATION
-         ================================ -->
+         ================================== -->
+
     <nav>
-        <div class="logo">SCRUB<span>IT</span></div>
+
+        <div class="logo">
+            SCRUB<span>IT</span>
+        </div>
 
         <div class="privacy-badge">
             🔒 Local AI
         </div>
+
     </nav>
 
 
-    <!-- ================================
+    <!-- ==================================
          UPLOAD SCREEN
+         ================================== -->
 
-         This is the first screen the user sees.
-         The user selects their social media
-         archive and starts the scan.
-         ================================ -->
     <main id="upload-screen" class="screen">
 
         <section class="hero">
-            <p class="eyebrow">YOUR DIGITAL FOOTPRINT, YOUR CONTROL</p>
+
+            <p class="eyebrow">
+                YOUR DIGITAL FOOTPRINT, YOUR CONTROL
+            </p>
 
             <h1>
                 Find the posts you might
@@ -42,51 +53,78 @@
             </h1>
 
             <p class="subtitle">
-                SCRUBIT uses locally running AI to review your social
-                media history for potential professional reputation risks.
+                SCRUBIT uses locally running AI to review
+                your social media history for potential
+                professional reputation risks.
                 Your data stays on your device.
             </p>
+
         </section>
 
 
         <!-- Upload card -->
+
         <section class="upload-card">
 
-            <div class="upload-icon">↑</div>
+            <div class="upload-icon">
+                ↑
+            </div>
 
-            <h2>Upload your social media archive</h2>
+            <h2>
+                Upload your social media archive
+            </h2>
 
             <p>
-                Select your exported social media data to begin your
-                private scan.
+                Select your exported social media data
+                to begin your private scan.
             </p>
 
-            <!-- Hidden real file input -->
+
+            <!-- Hidden file input -->
+
             <input
                 type="file"
                 id="file-input"
-                accept=".zip,.json"
+                accept=".zip,.json,.js"
                 hidden
             >
 
-            <!-- Pretty button that opens file picker -->
-            <button id="choose-file-button" class="secondary-button">
+
+            <!-- Opens file picker -->
+
+            <button
+                id="choose-file-button"
+                class="secondary-button"
+            >
                 Choose Archive
             </button>
 
-            <!-- Shows selected filename -->
-            <p id="file-name" class="file-name">
+
+            <!-- Selected filename -->
+
+            <p
+                id="file-name"
+                class="file-name"
+            >
                 No file selected
             </p>
 
+
             <!-- Starts scan -->
-            <button id="scan-button" class="primary-button" disabled>
+
+            <button
+                id="scan-button"
+                class="primary-button"
+                disabled
+            >
                 SCRUB MY PROFILE
             </button>
 
+
             <p class="privacy-message">
-                🔒 Your archive is processed locally and is not uploaded
-                to a third-party AI service.
+                🔒 Your archive is processed locally
+                and is not uploaded to a third-party
+                AI service.
             </p>
 
         </section>
@@ -94,98 +132,180 @@
     </main>
 
 
-    <!-- ================================
+    <!-- ==================================
          SCANNING SCREEN
+         ================================== -->
 
-         Hidden until the user starts a scan.
-         ================================ -->
-    <main id="scanning-screen" class="screen hidden">
+    <main
+        id="scanning-screen"
+        class="screen hidden"
+    >
 
         <section class="scanning-container">
 
             <div class="scanner"></div>
 
-            <p class="eyebrow">LOCAL ANALYSIS</p>
-
-            <h1>Scrubbing your profile...</h1>
-
-            <p>
-                Our local AI is reviewing your posts for potential
-                professional reputation risks.
+            <p class="eyebrow">
+                LOCAL ANALYSIS
             </p>
 
+            <h1>
+                Scrubbing your profile...
+            </h1>
+
+            <p>
+                Our local AI is reviewing your posts
+                for potential professional reputation
+                risks.
+            </p>
+
+
             <div class="progress-container">
-                <div id="progress-bar" class="progress-bar"></div>
+
+                <div
+                    id="progress-bar"
+                    class="progress-bar"
+                ></div>
+
             </div>
 
-            <p id="progress-text">Preparing archive...</p>
+
+            <p id="progress-text">
+                Preparing archive...
+            </p>
 
         </section>
 
     </main>
 
 
-    <!-- ================================
+    <!-- ==================================
          RESULTS SCREEN
+         ================================== -->
 
-         For now this uses FAKE results.
-
-         Later, our backend/AI teammates will
-         replace these values with real results.
-         ================================ -->
-    <main id="results-screen" class="screen hidden">
+    <main
+        id="results-screen"
+        class="screen hidden"
+    >
 
         <section class="results-header">
 
-            <p class="eyebrow">SCAN COMPLETE</p>
+            <p class="eyebrow">
+                SCAN COMPLETE
+            </p>
 
-            <h1>Your Digital Footprint</h1>
+            <h1>
+                Your Digital Footprint
+            </h1>
 
             <p>
-                <strong id="total-posts">15</strong>
+                <strong id="total-posts">0</strong>
                 posts analyzed locally.
             </p>
 
         </section>
 
 
-        <!-- Risk summary -->
+        <!-- ==================================
+             ANALYSIS SUMMARY
+             ================================== -->
+
         <section class="risk-grid">
 
+
+            <!-- HIGH PRIORITY -->
+
             <div class="risk-card high">
-                <p>HIGH RISK</p>
-                <h2 id="high-count">2</h2>
-                <span>Review first</span>
+
+                <p>
+                    HIGH PRIORITY
+                </p>
+
+                <h2 id="high-count">
+                    0
+                </h2>
+
+                <span>
+                    Review first
+                </span>
+
             </div>
 
-            <div class="risk-card medium">
-                <p>MEDIUM RISK</p>
-                <h2 id="medium-count">4</h2>
-                <span>Worth reviewing</span>
-            </div>
+
+            <!-- LOW PRIORITY -->
 
             <div class="risk-card low">
-                <p>LOW RISK</p>
-                <h2 id="low-count">9</h2>
-                <span>Looks good</span>
+
+                <p>
+                    LOW PRIORITY
+                </p>
+
+                <h2 id="low-count">
+                    0
+                </h2>
+
+                <span>
+                    Worth reviewing
+                </span>
+
             </div>
+
+
+            <!-- CLEAR -->
+
+            <div class="risk-card clear">
+
+                <p>
+                    CLEAR
+                </p>
+
+                <h2 id="clear-count">
+                    0
+                </h2>
+
+                <span>
+                    No concerns detected
+                </span>
+
+            </div>
+
 
         </section>
 
 
-        <!-- Flagged posts will be generated by JavaScript -->
+        <!-- ==================================
+             FLAGGED POSTS
+             ================================== -->
+
         <section class="flagged-section">
 
             <div class="section-heading">
+
                 <div>
-                    <p class="eyebrow">RECOMMENDED REVIEW</p>
-                    <h2>Flagged Posts</h2>
+
+                    <p class="eyebrow">
+                        RECOMMENDED REVIEW
+                    </p>
+
+                    <h2>
+                        Flagged Posts
+                    </h2>
+
                 </div>
 
-                <button id="scan-again-button" class="secondary-button">
+
+                <button
+                    id="scan-again-button"
+                    class="secondary-button"
+                >
                     Scan Again
                 </button>
+
             </div>
+
+
+            <!-- JavaScript inserts only
+                 HIGH / LOW / UNKNOWN posts here -->
 
             <div id="posts-container"></div>
 
@@ -194,8 +314,10 @@
     </main>
 
 
-    <!-- Our JavaScript -->
+    <!-- SCRUBIT JavaScript -->
+
     <script src="script.js"></script>
 
 </body>
+
 </html>

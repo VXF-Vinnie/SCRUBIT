@@ -1,14 +1,23 @@
 /*
-    ==========================================
-    SCRUBIT FRONTEND LOGIC
-    ==========================================
+   ==========================================
+   SCRUBIT FRONTEND LOGIC
+   ==========================================
 
-    Connects the SCRUBIT frontend to the
-    FastAPI backend running locally.
+   Connects the SCRUBIT frontend to the
+   FastAPI backend running locally.
 
-    The selected social media archive is sent
-    to the backend, where posts are extracted
-    and analyzed by the local AI model.
+   Classification system:
+
+   HIGH  = High Priority
+           Serious concern that should be
+           reviewed first.
+
+   LOW   = Low Priority
+           Potential concern worth reviewing.
+
+   CLEAR = No meaningful concern detected.
+           These posts are counted but are
+           not displayed as flagged posts.
 */
 
 
@@ -85,8 +94,11 @@ scanButton.addEventListener("click", async () => {
     const file = fileInput.files[0];
 
     if (!file) {
+
         alert("Please select an archive first.");
+
         return;
+
     }
 
 
@@ -96,12 +108,15 @@ scanButton.addEventListener("click", async () => {
     // Show scanning screen.
     scanningScreen.classList.remove("hidden");
 
+
     // Reset progress.
     progressBar.style.width = "10%";
-    progressText.textContent = "Reading archive...";
+
+    progressText.textContent =
+        "Reading archive...";
 
 
-    // Prepare file for FastAPI.
+    // Prepare the selected archive for FastAPI.
     const formData = new FormData();
 
     formData.append("file", file);
@@ -110,10 +125,12 @@ scanButton.addEventListener("click", async () => {
     try {
 
         progressBar.style.width = "25%";
-        progressText.textContent = "Uploading archive...";
+
+        progressText.textContent =
+            "Uploading archive...";
 
 
-        // Send the ZIP file to the SCRUBIT backend.
+        // Send archive to local SCRUBIT backend.
         const response = await fetch(
             "http://127.0.0.1:8000/scan",
             {
@@ -124,6 +141,7 @@ scanButton.addEventListener("click", async () => {
 
 
         progressBar.style.width = "60%";
+
         progressText.textContent =
             "Running local AI analysis...";
 
@@ -152,9 +170,11 @@ scanButton.addEventListener("click", async () => {
         );
 
 
-        // Make sure results were returned.
-        if (!data.results ||
-            !Array.isArray(data.results)) {
+        // Validate backend response.
+        if (
+            !data.results ||
+            !Array.isArray(data.results)
+        ) {
 
             throw new Error(
                 "Backend did not return a valid results array."
@@ -164,6 +184,7 @@ scanButton.addEventListener("click", async () => {
 
 
         progressBar.style.width = "90%";
+
         progressText.textContent =
             "Preparing your results...";
 
@@ -220,17 +241,15 @@ function showResults(results) {
     resultsScreen.classList.remove("hidden");
 
 
-    // Count risk levels.
+    // ======================================
+    // COUNT CLASSIFICATIONS
+    // ======================================
 
     const high =
         results.filter(
             post => post.risk === "HIGH"
         ).length;
 
-    const medium =
-        results.filter(
-            post => post.risk === "MEDIUM"
-        ).length;
 
     const low =
         results.filter(
@@ -238,61 +257,165 @@ function showResults(results) {
         ).length;
 
 
+    const clear =
+        results.filter(
+            post => post.risk === "CLEAR"
+        ).length;
+
+
+    // ======================================
+    // UPDATE DASHBOARD
+    // ======================================
+
     document.getElementById("high-count")
         .textContent = high;
 
-    document.getElementById("medium-count")
-        .textContent = medium;
 
     document.getElementById("low-count")
         .textContent = low;
+
+
+    document.getElementById("clear-count")
+        .textContent = clear;
+
 
     document.getElementById("total-posts")
         .textContent = results.length;
 
 
+    // Only flagged posts are displayed below.
     renderPosts(results);
 
 }
 
 
 // ==========================================
-// CREATE POST CARDS
+// CREATE FLAGGED POST CARDS
 // ==========================================
 
 function renderPosts(results) {
 
-    // Clear old cards.
+    // Clear previous results.
     postsContainer.innerHTML = "";
 
 
-    // High-risk posts appear first.
+    // ======================================
+    // REMOVE CLEAR POSTS
+    // ======================================
+
+    // HIGH and LOW posts require some level
+    // of review.
+    //
+    // CLEAR posts do not need to appear under
+    // "Flagged Posts."
+
+    const flaggedResults =
+        results.filter(
+            post =>
+                post.risk === "HIGH" ||
+                post.risk === "LOW" ||
+                post.risk === "UNKNOWN"
+        );
+
+
+    // ======================================
+    // NO FLAGGED POSTS
+    // ======================================
+
+    if (flaggedResults.length === 0) {
+
+        postsContainer.innerHTML = `
+            <article class="post-card">
+
+                <div class="post-top">
+
+                    <span class="risk-label clear">
+                        CLEAR
+                    </span>
+
+                    <span class="category">
+                        No Significant Risk
+                    </span>
+
+                </div>
+
+                <p class="post-text">
+                    No posts were flagged for review.
+                </p>
+
+                <p class="explanation">
+                    SCRUBIT did not detect any meaningful
+                    professional or reputational concerns
+                    in this archive.
+                </p>
+
+            </article>
+        `;
+
+        return;
+
+    }
+
+
+    // ======================================
+    // SORT FLAGGED POSTS
+    // ======================================
 
     const riskOrder = {
         HIGH: 1,
-        MEDIUM: 2,
-        LOW: 3
+        LOW: 2,
+        UNKNOWN: 3
     };
 
 
     const sortedResults =
-        [...results].sort(
+        [...flaggedResults].sort(
             (a, b) =>
                 (riskOrder[a.risk] || 99) -
                 (riskOrder[b.risk] || 99)
         );
 
 
+    // ======================================
+    // BUILD POST CARDS
+    // ======================================
+
     sortedResults.forEach(post => {
 
         const card =
             document.createElement("article");
 
+
         card.className = "post-card";
 
 
         const riskClass =
-            (post.risk || "LOW").toLowerCase();
+            (post.risk || "UNKNOWN")
+                .toLowerCase();
+
+
+        // Convert backend classification into
+        // user-friendly UI wording.
+
+        let riskLabel = "REVIEW";
+
+
+        if (post.risk === "HIGH") {
+
+            riskLabel =
+                "HIGH PRIORITY";
+
+        } else if (post.risk === "LOW") {
+
+            riskLabel =
+                "LOW PRIORITY";
+
+        } else if (post.risk === "UNKNOWN") {
+
+            riskLabel =
+                "MANUAL REVIEW";
+
+        }
 
 
         card.innerHTML = `
@@ -300,26 +423,54 @@ function renderPosts(results) {
             <div class="post-top">
 
                 <span class="risk-label ${riskClass}">
-                    ${post.risk} RISK
+                    ${riskLabel}
                 </span>
 
                 <span class="category">
-                    ${post.category || "General"}
+                    ${post.category || "Other"}
                 </span>
 
             </div>
 
 
             <p class="post-text">
-                "${post.text}"
+                "${post.text || ""}"
             </p>
 
 
             <p class="explanation">
-                <strong>Why was this flagged?</strong>
+
+                <strong>
+                    Why should I review this?
+                </strong>
+
                 <br><br>
-                ${post.explanation || "No explanation provided."}
+
+                ${
+                    post.explanation ||
+                    "No explanation provided."
+                }
+
             </p>
+
+
+            ${
+                post.recommendation
+                    ? `
+                        <p class="recommendation">
+
+                            <strong>
+                                Recommendation:
+                            </strong>
+
+                            <br><br>
+
+                            ${post.recommendation}
+
+                        </p>
+                    `
+                    : ""
+            }
 
         `;
 
@@ -341,17 +492,23 @@ scanAgainButton.addEventListener("click", () => {
 
     uploadScreen.classList.remove("hidden");
 
+
     fileInput.value = "";
+
 
     fileName.textContent =
         "No file selected";
 
+
     scanButton.disabled = true;
+
 
     progressBar.style.width = "0%";
 
+
     progressText.textContent =
         "Reading archive...";
+
 
     postsContainer.innerHTML = "";
 
